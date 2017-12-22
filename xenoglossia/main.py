@@ -31,7 +31,7 @@ def main():
         return 65
     except ParseError as e:
         # TODO probably be better not to print pyparsing's error directly
-        print("Unable to parse provided program: {}".format(e))
+        print("Unable to parse provided program: error at col {}".format(args.command.find(e[1][0])+1))
         return 64
 
     if six.PY2:

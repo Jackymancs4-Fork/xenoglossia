@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from . import builtins
 
-from pyparsing import ParseException, Group, OneOrMore, Word, QuotedString, ZeroOrMore, alphas, alphanums
+from pyparsing import ParseException, Group, OneOrMore, Word, QuotedString, ZeroOrMore, alphas, alphanums, printables
 import six
 
 
@@ -18,11 +18,12 @@ dq_string = QuotedString( quoteChar='"' )
 STRING = sq_string ^ dq_string
 
 IDENTIFIER = Word( alphas + "_", alphanums + "_" )
+BAD_IDENTIFIER = Word (printables, printables)
 
-FUNCTION_CALL = Group( IDENTIFIER + ZeroOrMore( STRING ) )
+FUNCTION_CALL = Group( IDENTIFIER  + ZeroOrMore( STRING ) )
+BAD_FUNCTION_CALL = Group( BAD_IDENTIFIER + ZeroOrMore( STRING ) )
 
-PROGRAM = OneOrMore( FUNCTION_CALL )
-
+PROGRAM = OneOrMore(BAD_FUNCTION_CALL)
 
 def tokenize(program):
     # String literals are defined as being UTF-8;
@@ -34,10 +35,10 @@ def tokenize(program):
             return s
 
     try:
-        return [{'function': el[0], 'arguments': map(decode, el[1:])} for el in PROGRAM.parseString(program)]
+        return [{'function': IDENTIFIER.parseString(el[0])[0],'arguments': map(decode, el[1:])} for el in PROGRAM.parseString(program)]
     except ParseException as e:
         # wrap the orginal exception in a local type
-        raise ParseError(e)
+        raise ParseError(e, el)
 
 
 def run_program(input, program):
